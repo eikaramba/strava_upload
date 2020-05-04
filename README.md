@@ -1,35 +1,32 @@
 # stravaup
-Upload FIT, TCX and GPX files to strava.com from the command line.
+Strava uploader for GPX/TCX/FIT files.
+Based on https://github.com/mpolla/stravaup
 
 ## Prerequisites
-* POSIX shell
+* bash
 * cURL
+* jq
 
-## Setup
-1.  Sign up at http://www.strava.com/
-2. Register your own Strava client at https://www.strava.com/settings/api
-3. Create a .stravauprc file in your home directory:
-~~~
-STRAVAUP_CLIENT_ID=FIXME
-STRAVAUP_CLIENT_SECRET=FIXME
-~~~
-4. Get your authorization code
-* Go to https://www.strava.com/oauth/authorize?client_id=YOUR_STRAVAUP_CLIENT_ID&response_type=code&redirect_uri=http://localhost/index.php&approval_prompt=force&scope=write
-* Select 'Authorize' which will lead to a redirect URL
-* Copy the code from the redirect URL into your .stravauprc:
-~~~
-STRAVAUP_CODE=FIXME
-~~~
 
-## Usage
-Upload a single file:
+## Usage:
+Upload a file:
 
-    stravaup file.fit
+  `strava_upload.sh [options] file`
 
-Use find and xargs to upload everything:
+Permitted options are:
 
-    find -iname \*.fit | xargs stravaup
+`-a, --activity-type=type` One of ride, run, swim, workout, hike, walk, ebikeride, virtualride, etc.
 
-## More info
+`-c, --commute` Activity is a commute
 
-Strava API reference https://strava.github.io/api/
+`-d, --description="Activity description"` Activity description
+
+`-n, --name="Activity name"` Activity name
+
+`-t, --trainer` Activity is indoor
+
+`-z, --gzip` Compress file with gzip before upload (if not already compressed)
+
+eg:
+
+  `strava_upload.sh -n "Daily permitted exercise" --description="Why are so many people driving around in cars?" -z Desktop/Current.gpx`
