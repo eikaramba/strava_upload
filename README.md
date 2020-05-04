@@ -1,4 +1,4 @@
-# stravaup
+# strava_upload
 Strava uploader for GPX/TCX/FIT files.
 Based on https://github.com/mpolla/stravaup
 
