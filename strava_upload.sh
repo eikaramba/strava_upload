@@ -7,6 +7,9 @@
 #
 # Kim Wall kim@ductilebiscuit.net
 
+# Devices to add "with barometer" to the creator tag of (this has not been tested on TCX files):
+TCX_BAROMETERS=()
+GPX_BAROMETERS=("eTrex 30")
 
 # Exit if something fails
 set -e
@@ -88,6 +91,17 @@ if [ "$SUFFIX" = "fit" ]; then
     fi
 fi
 if [ "$SUFFIX" = "tcx" ]; then
+    # UNTESTED: Add barometer to TCX creator for supported devices
+    for i in "${TCX_BAROMETERS[@]}"
+    do
+        if grep "<Name>$i</Name>" "$FILE" >/dev/null; then
+            TIME=`date +%T`
+            echo "$TIME Editing $FILE to add \"with barometer\" (Strava needs this to use elevation data from the $i)..."
+		echo "s#<Name>$i</Name>#<Name>$i with barometer</Name>#"
+            sed --in-place "s#<Name>$i</Name>#<Name>$i with barometer</Name>#" "$FILE"
+            break
+        fi
+    done
     if [ -n "$GZIP" ]; then
 	TIME=`date +%T`
         echo "$TIME Compressing $FILE with gzip..."
@@ -99,12 +113,15 @@ if [ "$SUFFIX" = "tcx" ]; then
     fi
 fi
 if [ "$SUFFIX" = "gpx" ]; then
-    if grep "creator=\"eTrex 30\"" "$FILE" >/dev/null; then
-        TIME=`date +%T`
-        echo "$TIME Editing $FILE to add \"with barometer\" (Strava needs this to use elevation data from eTrex 30)..."
-        #sed --in-place=.bak 's/creator="eTrex 30"/creator="eTrex 30 with barometer"/' "$FILE"
-        sed --in-place 's/creator="eTrex 30"/creator="eTrex 30 with barometer"/' "$FILE"
-    fi
+    for i in "${GPX_BAROMETERS[@]}"
+    do
+        if grep "creator=\"$i\"" "$FILE" >/dev/null; then
+            TIME=`date +%T`
+            echo "$TIME Editing $FILE to add \"with barometer\" (Strava needs this to use elevation data from the $i)..."
+            sed --in-place "s#creator=\"$i\"#creator=\"$i with barometer\"#" "$FILE"
+            break
+        fi
+    done
     if [ -n "$GZIP" ]; then
         TIME=`date +%T`
         echo "$TIME Compressing $FILE with gzip..."
