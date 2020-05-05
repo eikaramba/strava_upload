@@ -67,14 +67,16 @@ if [ ! -f "$FILE" ]; then
     exit 1
 fi
 
-# Check file type
+# Make a temporary copy of the file
 FILENAME=$(basename "$FILE")
 SUFFIX="${FILENAME#*.}"
+TEMPDIR=`mktemp -d --suffix=_strava_upload`
+cp $FILE $TEMPDIR/stravaup_data.$SUFFIX
+FILE=$TEMPDIR/stravaup_data.$SUFFIX
+
+# Check the filetype
 DATATYPE=""
 if [ "$SUFFIX" = "fit" ]; then
-    TEMPDIR=`mktemp -d --suffix=_strava_upload`
-    cp $FILE $TEMPDIR/stravaup_data.$SUFFIX
-    FILE=$TEMPDIR/stravaup_data.$SUFFIX
     if [ -n "$GZIP" ]; then
 	TIME=`date +%T`
         echo "$TIME Compressing $FILE with gzip..."
@@ -86,9 +88,6 @@ if [ "$SUFFIX" = "fit" ]; then
     fi
 fi
 if [ "$SUFFIX" = "tcx" ]; then
-    TEMPDIR=`mktemp -d --suffix=_strava_upload`
-    cp $FILE $TEMPDIR/stravaup_data.$SUFFIX
-    FILE=$TEMPDIR/stravaup_data.$SUFFIX
     if [ -n "$GZIP" ]; then
 	TIME=`date +%T`
         echo "$TIME Compressing $FILE with gzip..."
@@ -100,9 +99,6 @@ if [ "$SUFFIX" = "tcx" ]; then
     fi
 fi
 if [ "$SUFFIX" = "gpx" ]; then
-    TEMPDIR=`mktemp -d --suffix=_strava_upload`
-    cp $FILE $TEMPDIR/stravaup_data.$SUFFIX
-    FILE=$TEMPDIR/stravaup_data.$SUFFIX
     if grep "creator=\"eTrex 30\"" "$FILE" >/dev/null; then
         TIME=`date +%T`
         echo "$TIME Editing $FILE to add \"with barometer\" (Strava needs this to use elevation data from eTrex 30)..."
@@ -120,25 +116,18 @@ if [ "$SUFFIX" = "gpx" ]; then
     fi
 fi
 if [ "$SUFFIX" = "fit.gz" ]; then
-    TEMPDIR=`mktemp -d --suffix=_strava_upload`
-    cp $FILE $TEMPDIR/stravaup_data.$SUFFIX
-    FILE=$TEMPDIR/stravaup_data.$SUFFIX
     DATATYPE="$SUFFIX"
 fi
 if [ "$SUFFIX" = "tcx.gz" ]; then
-    TEMPDIR=`mktemp -d --suffix=_strava_upload`
-    cp $FILE $TEMPDIR/stravaup_data.$SUFFIX
-    FILE=$TEMPDIR/stravaup_data.$SUFFIX
     DATATYPE="$SUFFIX"
 fi
 if [ "$SUFFIX" = "gpx.gz" ]; then
-    TEMPDIR=`mktemp -d --suffix=_strava_upload`
-    cp $FILE $TEMPDIR/stravaup_data.$SUFFIX
-    FILE=$TEMPDIR/stravaup_data.$SUFFIX
     DATATYPE="$SUFFIX"
 fi
 if [ "$DATATYPE" = "" ]; then
     echo "Unknown file type $SUFFIX"
+    rm $FILE
+    rmdir $TEMPDIR
     exit 1
 fi
 
