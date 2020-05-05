@@ -72,34 +72,37 @@ FILENAME=$(basename "$FILE")
 SUFFIX="${FILENAME#*.}"
 DATATYPE=""
 if [ "$SUFFIX" = "fit" ]; then
-    cp $FILE /tmp/stravaup_data.$SUFFIX
-    FILE=/tmp/stravaup_data.$SUFFIX
+    TEMPDIR=`mktemp -d --suffix=_strava_upload`
+    cp $FILE $TEMPDIR/stravaup_data.$SUFFIX
+    FILE=$TEMPDIR/stravaup_data.$SUFFIX
     if [ -n "$GZIP" ]; then
 	TIME=`date +%T`
         echo "$TIME Compressing $FILE with gzip..."
-        gzip /tmp/stravaup_data.$SUFFIX
-        FILE=/tmp/stravaup_data.$SUFFIX.gz
+        gzip $TEMPDIR/stravaup_data.$SUFFIX
+        FILE=$TEMPDIR/stravaup_data.$SUFFIX.gz
         DATATYPE=$SUFFIX.gz
     else
         DATATYPE=$SUFFIX
     fi
 fi
 if [ "$SUFFIX" = "tcx" ]; then
-    cp $FILE /tmp/stravaup_data.$SUFFIX
-    FILE=/tmp/stravaup_data.$SUFFIX
+    TEMPDIR=`mktemp -d --suffix=_strava_upload`
+    cp $FILE $TEMPDIR/stravaup_data.$SUFFIX
+    FILE=$TEMPDIR/stravaup_data.$SUFFIX
     if [ -n "$GZIP" ]; then
 	TIME=`date +%T`
         echo "$TIME Compressing $FILE with gzip..."
-        gzip /tmp/stravaup_data.$SUFFIX
-        FILE=/tmp/stravaup_data.$SUFFIX.gz
+        gzip $TEMPDIR/stravaup_data.$SUFFIX
+        FILE=$TEMPDIR/stravaup_data.$SUFFIX.gz
         DATATYPE=$SUFFIX.gz
     else
         DATATYPE=$SUFFIX
     fi
 fi
 if [ "$SUFFIX" = "gpx" ]; then
-    cp $FILE /tmp/stravaup_data.$SUFFIX
-    FILE=/tmp/stravaup_data.$SUFFIX
+    TEMPDIR=`mktemp -d --suffix=_strava_upload`
+    cp $FILE $TEMPDIR/stravaup_data.$SUFFIX
+    FILE=$TEMPDIR/stravaup_data.$SUFFIX
     if grep "creator=\"eTrex 30\"" "$FILE" >/dev/null; then
         TIME=`date +%T`
         echo "$TIME Editing $FILE to add \"with barometer\" (Strava needs this to use elevation data from eTrex 30)..."
@@ -109,26 +112,29 @@ if [ "$SUFFIX" = "gpx" ]; then
     if [ -n "$GZIP" ]; then
         TIME=`date +%T`
         echo "$TIME Compressing $FILE with gzip..."
-        gzip /tmp/stravaup_data.$SUFFIX
-        FILE=/tmp/stravaup_data.$SUFFIX.gz
+        gzip $TEMPDIR/stravaup_data.$SUFFIX
+        FILE=$TEMPDIR/stravaup_data.$SUFFIX.gz
         DATATYPE=$SUFFIX.gz
     else
         DATATYPE=$SUFFIX
     fi
 fi
 if [ "$SUFFIX" = "fit.gz" ]; then
+    TEMPDIR=`mktemp -d --suffix=_strava_upload`
+    cp $FILE $TEMPDIR/stravaup_data.$SUFFIX
+    FILE=$TEMPDIR/stravaup_data.$SUFFIX
     DATATYPE="$SUFFIX"
-    cp $FILE /tmp/stravaup_data.$SUFFIX
-    FILE=/tmp/stravaup_data.$SUFFIX
 fi
 if [ "$SUFFIX" = "tcx.gz" ]; then
-    cp $FILE /tmp/stravaup_data.$SUFFIX
-    FILE=/tmp/stravaup_data.$SUFFIX
+    TEMPDIR=`mktemp -d --suffix=_strava_upload`
+    cp $FILE $TEMPDIR/stravaup_data.$SUFFIX
+    FILE=$TEMPDIR/stravaup_data.$SUFFIX
     DATATYPE="$SUFFIX"
 fi
 if [ "$SUFFIX" = "gpx.gz" ]; then
-    cp $FILE /tmp/stravaup_data.$SUFFIX
-    FILE=/tmp/stravaup_data.$SUFFIX
+    TEMPDIR=`mktemp -d --suffix=_strava_upload`
+    cp $FILE $TEMPDIR/stravaup_data.$SUFFIX
+    FILE=$TEMPDIR/stravaup_data.$SUFFIX
     DATATYPE="$SUFFIX"
 fi
 if [ "$DATATYPE" = "" ]; then
@@ -170,8 +176,9 @@ CURLOUTPUT=`curl -s -X POST https://www.strava.com/api/v3/uploads -H "Authorizat
 ID=`echo $CURLOUTPUT | jq -r '.id'`
 STATUS=`echo $CURLOUTPUT | jq -r '.status'`
 
-# Delete temporary file
+# Delete temporary file and directory
 rm $FILE
+rmdir $TEMPDIR
 
 # Wait for response
 WAIT=1
