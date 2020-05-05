@@ -2,7 +2,7 @@
 Strava uploader for GPX/TCX/FIT files.
 Based on https://github.com/mpolla/stravaup
 
-GPX files originating from a Garmin eTrex 30 will have "with barometer" added to the 'creator' field so that Strava uses their own elevation readings.
+GPX files originating from a Garmin eTrex 30 will have "with barometer" added to the 'creator' field so that Strava uses their elevation readings.
 
 ## Prerequisites
 * bash
