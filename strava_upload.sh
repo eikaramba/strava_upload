@@ -118,11 +118,17 @@ if [ "$SUFFIX" = "gpx" ]; then
 fi
 if [ "$SUFFIX" = "fit.gz" ]; then
     DATATYPE="$SUFFIX"
+    cp $FILE /tmp/stravaup_data.$SUFFIX
+    FILE=/tmp/stravaup_data.$SUFFIX
 fi
 if [ "$SUFFIX" = "tcx.gz" ]; then
+    cp $FILE /tmp/stravaup_data.$SUFFIX
+    FILE=/tmp/stravaup_data.$SUFFIX
     DATATYPE="$SUFFIX"
 fi
 if [ "$SUFFIX" = "gpx.gz" ]; then
+    cp $FILE /tmp/stravaup_data.$SUFFIX
+    FILE=/tmp/stravaup_data.$SUFFIX
     DATATYPE="$SUFFIX"
 fi
 if [ "$DATATYPE" = "" ]; then
