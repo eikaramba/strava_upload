@@ -25,6 +25,8 @@ Permitted options are:
 
 `-n, --name="Activity name"` Activity name
 
+`-s, --silent` Surpress status messages other than errors
+
 `-t, --trainer` Activity is indoor
 
 `-z, --gzip` Compress file with gzip before upload (if not already compressed)
