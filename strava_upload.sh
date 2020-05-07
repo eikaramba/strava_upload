@@ -33,6 +33,7 @@ if [ $# -lt 1 ]; then
     echo " -c, --commute                        Activity is a commute"
     echo " -d, --description=\"Description\"      Activity description"
     echo " -n, --name=\"Name\"                    Activity name"
+    echo " -s, --silent                         Surpress status messages other than errors"
     echo " -t, --trainer                        Activity is indoor"
     echo " -z, --gzip                           Compress file with gzip before upload (if not already compressed)"
     exit 1
@@ -42,6 +43,7 @@ fi
 # Build options from command line parameters
 OPTIONS=()
 GZIP=""
+SILENT=""
 while [[ $# -gt 0 ]]; do
     case $1 in
         -d) OPTIONS+=("-F" "description=$2"); shift; shift;;
@@ -53,6 +55,7 @@ while [[ $# -gt 0 ]]; do
 	--name=*) OPTIONS+=("-F" "name=${1#*=}"); shift;;
 	--activity-type=*) OPTIONS+=("-F" "activity_type=${1#*=}"); shift;;
 	-z|--gzip) GZIP=1; shift;;
+	-s|--silent) SILENT=1; shift;;
 	-*) echo "Unknown option: $1" >&2; exit 1;;
         *) if [ -n "$FILE" ]; then
 		echo "Uploading multiple files is not supported! (Got $FILE and $1)"
@@ -71,9 +74,13 @@ if [ ! -f "$FILE" ]; then
 fi
 
 # Make a temporary copy of the file
+TIME=`date +%T`
 FILENAME=$(basename "$FILE")
 SUFFIX="${FILENAME#*.}"
 TEMPDIR=`mktemp -d --suffix=_strava_upload`
+if [ -z "$SILENT" ]; then
+    echo "$TIME Creating temporary file in $TEMPDIR/"
+fi
 cp $FILE $TEMPDIR/stravaup_data.$SUFFIX
 FILE=$TEMPDIR/stravaup_data.$SUFFIX
 
@@ -82,7 +89,9 @@ DATATYPE=""
 if [ "$SUFFIX" = "fit" ]; then
     if [ -n "$GZIP" ]; then
 	TIME=`date +%T`
-        echo "$TIME Compressing $FILE with gzip..."
+        if [ -z "$SILENT" ]; then
+            echo "$TIME Compressing $FILE with gzip..."
+        fi
         gzip $TEMPDIR/stravaup_data.$SUFFIX
         FILE=$TEMPDIR/stravaup_data.$SUFFIX.gz
         DATATYPE=$SUFFIX.gz
@@ -96,15 +105,18 @@ if [ "$SUFFIX" = "tcx" ]; then
     do
         if grep "<Name>$i</Name>" "$FILE" >/dev/null; then
             TIME=`date +%T`
-            echo "$TIME Editing $FILE to add \"with barometer\" (Strava needs this to use elevation data from the $i)..."
-		echo "s#<Name>$i</Name>#<Name>$i with barometer</Name>#"
+            if [ -z "$SILENT" ]; then
+                echo "$TIME Editing $FILE to add \"with barometer\" (Strava needs this to use elevation data from the $i)..."
+            fi
             sed --in-place "s#<Name>$i</Name>#<Name>$i with barometer</Name>#" "$FILE"
             break
         fi
     done
     if [ -n "$GZIP" ]; then
 	TIME=`date +%T`
-        echo "$TIME Compressing $FILE with gzip..."
+        if [ -z "$SILENT" ]; then
+            echo "$TIME Compressing $FILE with gzip..."
+        fi
         gzip $TEMPDIR/stravaup_data.$SUFFIX
         FILE=$TEMPDIR/stravaup_data.$SUFFIX.gz
         DATATYPE=$SUFFIX.gz
@@ -117,14 +129,18 @@ if [ "$SUFFIX" = "gpx" ]; then
     do
         if grep "creator=\"$i\"" "$FILE" >/dev/null; then
             TIME=`date +%T`
-            echo "$TIME Editing $FILE to add \"with barometer\" (Strava needs this to use elevation data from the $i)..."
+            if [ -z "$SILENT" ]; then
+                echo "$TIME Editing $FILE to add \"with barometer\" (Strava needs this to use elevation data from the $i)..."
+            fi
             sed --in-place "s#creator=\"$i\"#creator=\"$i with barometer\"#" "$FILE"
             break
         fi
     done
     if [ -n "$GZIP" ]; then
         TIME=`date +%T`
-        echo "$TIME Compressing $FILE with gzip..."
+        if [ -z "$SILENT" ]; then
+            echo "$TIME Compressing $FILE with gzip..."
+        fi
         gzip $TEMPDIR/stravaup_data.$SUFFIX
         FILE=$TEMPDIR/stravaup_data.$SUFFIX.gz
         DATATYPE=$SUFFIX.gz
@@ -163,7 +179,9 @@ fi
 # If needed, get refresh token
 if [ "$STRAVAUP_REFRESH_TOKEN" = "" ]; then
 	TIME=`date +%T`
-	echo "$TIME Exchanging authorization token for refresh token..."
+	if [ -z "$SILENT" ]; then
+            echo "$TIME Exchanging authorization token for refresh token..."
+        fi
 	STRAVAUP_REFRESH_TOKEN=$(curl -s -X POST https://www.strava.com/oauth/token -F client_id="$STRAVAUP_CLIENT_ID" -F client_secret="$STRAVAUP_CLIENT_SECRET" -F code="$STRAVAUP_CODE" -F grant_type=authorization_code | cut -d':' -f5 | cut -d',' -f1 | sed -e 's/[^a-z0-9]//g')
 	echo "STRAVAUP_REFRESH_TOKEN=$STRAVAUP_REFRESH_TOKEN" >> ${HOME}/.stravauprc
 fi
@@ -171,13 +189,17 @@ fi
 # Get auth token
 if [ "$TOKEN" = "" ]; then
     TIME=`date +%T`
-    echo "$TIME Getting auth token..."
+    if [ -z "$SILENT" ]; then
+        echo "$TIME Getting auth token..."
+    fi
     TOKEN=$(curl -s -X POST https://www.strava.com/oauth/token -F client_id="$STRAVAUP_CLIENT_ID" -F client_secret="$STRAVAUP_CLIENT_SECRET" -F grant_type=refresh_token -F refresh_token="$STRAVAUP_REFRESH_TOKEN" | grep access_token | cut -d':' -f3 | cut -d',' -f1 | sed -e 's/[^a-z0-9]//g')
 fi
 
 # Upload file
 TIME=`date +%T`
-echo "$TIME Attempting upload to Strava..."
+if [ -z "$SILENT" ]; then
+    echo "$TIME Attempting upload to Strava..."
+fi
 CURLOUTPUT=`curl -s -X POST https://www.strava.com/api/v3/uploads -H "Authorization: Bearer $TOKEN" -F data_type="$DATATYPE" "${OPTIONS[@]}" -F file=@$FILE`
 ID=`echo $CURLOUTPUT | jq -r '.id'`
 STATUS=`echo $CURLOUTPUT | jq -r '.status'`
@@ -191,7 +213,9 @@ WAIT=1
 while [ "$STATUS" = "Your activity is still being processed." ]
 do
 	TIME=`date +%T`
-	echo "$TIME Waiting for Strava to process the upload (id=$ID)..."
+	if [ -z "$SILENT" ]; then
+            echo "$TIME Waiting for Strava to process the upload (id=$ID)..."
+        fi
 	sleep $WAIT
 	if [ $(($WAIT)) -lt 300 ]; then
 		WAIT=$(($WAIT*2))
@@ -204,12 +228,14 @@ done
 ACTIVITY=`echo $CURLOUTPUT | jq -r '.activity_id'`
 
 # Report status
-echo "Upload complete: $STATUS"
+if [ -z "$SILENT" ]; then
+    echo "Upload complete: $STATUS"
+fi
 ERROR=`echo $CURLOUTPUT | jq -r '.error'`
 if [ "$ERROR" != "null" ]; then
 	echo $ERROR
 	exit 1
-else
+elif [ -z "$SILENT" ]; then
 	echo "You can see your activity at https://www.strava.com/activities/$ACTIVITY"
 fi
 
