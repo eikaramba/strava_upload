@@ -30,7 +30,7 @@ if [ $# -lt 1 ]; then
     echo "GPX, TCX and FIT files are supported (they may also be gzipped, eg. foobar.gpx.gz)"
     echo "Permitted command line options are:"
     echo " -a, --activity-type=type             One of ride, run, swim, workout, hike, walk, ebikeride, virtualride, etc."
-    echo " -A, --archive=\"dir\"                  Save a copy of the file in directory/"
+    echo " -A, --archive=\"dir\"                  Save a copy of the file in directory"
     echo " -c, --commute                        Activity is a commute"
     echo " -d, --description=\"Description\"      Activity description"
     echo " -n, --name=\"Name\"                    Activity name"
