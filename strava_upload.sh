@@ -30,6 +30,7 @@ if [ $# -lt 1 ]; then
     echo "GPX, TCX and FIT files are supported (they may also be gzipped, eg. foobar.gpx.gz)"
     echo "Permitted command line options are:"
     echo " -a, --activity-type=type             One of ride, run, swim, workout, hike, walk, ebikeride, virtualride, etc."
+    echo " -A, --archive=\"dir\"                  Save a copy of the file in directory/"
     echo " -c, --commute                        Activity is a commute"
     echo " -d, --description=\"Description\"      Activity description"
     echo " -n, --name=\"Name\"                    Activity name"
@@ -44,16 +45,19 @@ fi
 OPTIONS=()
 GZIP=""
 SILENT=""
+ARCHIVE=""
 while [[ $# -gt 0 ]]; do
     case $1 in
         -d) OPTIONS+=("-F" "description=$2"); shift; shift;;
 	-n) OPTIONS+=("-F" "name=$2"); shift; shift;;
 	-a|--activity-type) OPTIONS+=("-F" "activity_type=$2"); shift; shift;;
+        -A|--archive) ARCHIVE=("$2"); shift; shift;;
 	-c|--commute) OPTIONS+=("-F" "commute=true"); shift;;
 	-t|--trainer) OPTIONS+=("-F" "trainer=true"); shift;;
 	--description=*) OPTIONS+=("-F" "description=${1#*=}"); shift;;
 	--name=*) OPTIONS+=("-F" "name=${1#*=}"); shift;;
 	--activity-type=*) OPTIONS+=("-F" "activity_type=${1#*=}"); shift;;
+        --archive=*) ARCHIVE=("${1#*=}"); shift;;
 	-z|--gzip) GZIP=1; shift;;
 	-s|--silent) SILENT=1; shift;;
 	-*) echo "Unknown option: $1" >&2; exit 1;;
@@ -76,13 +80,35 @@ fi
 # Make a temporary copy of the file
 TIME=`date +%T`
 FILENAME=$(basename "$FILE")
+NAME="${FILENAME%%.*}"
 SUFFIX="${FILENAME#*.}"
 TEMPDIR=`mktemp -d --suffix=_strava_upload`
 if [ -z "$SILENT" ]; then
     echo "$TIME Creating temporary file in $TEMPDIR/"
 fi
-cp $FILE $TEMPDIR/stravaup_data.$SUFFIX
+cp -a $FILE $TEMPDIR/stravaup_data.$SUFFIX
 FILE=$TEMPDIR/stravaup_data.$SUFFIX
+
+#Archive the file if enabled
+if [ -n "$ARCHIVE" ]; then
+    if [ ! -d "$ARCHIVE" ]; then
+        echo "Archive target $ARCHIVE is not a directory!"
+	rm $FILE
+	rmdir $TEMPDIR
+	exit 1
+    fi
+    DATE=`date -I`
+    TARGET="$ARCHIVE"/"$DATE"_"$NAME"."$SUFFIX"
+    COUNT=0
+    while [ -f "$TARGET" ]
+    do
+        COUNT=$(($COUNT+1))
+        TARGET="$ARCHIVE"/"$DATE"_"$NAME"."$COUNT"."$SUFFIX"
+    done
+    TIME=`date +%T`
+    echo "$TIME Creating an archive copy in $TARGET"
+    cp -a "$FILE" "$TARGET"
+fi
 
 # Check the filetype
 DATATYPE=""
@@ -228,8 +254,9 @@ done
 ACTIVITY=`echo $CURLOUTPUT | jq -r '.activity_id'`
 
 # Report status
+TIME=`date +%T`
 if [ -z "$SILENT" ]; then
-    echo "Upload complete: $STATUS"
+    echo "$TIME Upload complete: $STATUS"
 fi
 ERROR=`echo $CURLOUTPUT | jq -r '.error'`
 if [ "$ERROR" != "null" ]; then
