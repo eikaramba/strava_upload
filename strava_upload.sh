@@ -86,8 +86,8 @@ TEMPDIR=`mktemp -d --suffix=_strava_upload`
 if [ -z "$SILENT" ]; then
     echo "$TIME Creating temporary file in $TEMPDIR/"
 fi
-cp -a $FILE $TEMPDIR/stravaup_data.$SUFFIX
-FILE=$TEMPDIR/stravaup_data.$SUFFIX
+cp -a "$FILE" "$TEMPDIR/stravaup_data.$SUFFIX"
+FILE="$TEMPDIR/stravaup_data.$SUFFIX"
 
 #Archive the file if enabled
 if [ -n "$ARCHIVE" ]; then
