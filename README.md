@@ -19,7 +19,7 @@ Permitted options are:
 
 `-a, --activity-type=type` One of ride, run, swim, workout, hike, walk, ebikeride, virtualride, etc.
 
-`-A, --archive="dir"` Save a copy of the file in directory"
+`-A, --archive="dir"` Save a copy of the file in directory
 
 `-c, --commute` Activity is a commute
 
