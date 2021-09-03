@@ -9,7 +9,7 @@
 
 # Devices to add "with barometer" to the creator tag of (this has not been tested on TCX files):
 TCX_BAROMETERS=()
-GPX_BAROMETERS=("eTrex 30")
+GPX_BAROMETERS=("eTrex 30" "eTrex 32x")
 
 # Exit if something fails
 set -e
