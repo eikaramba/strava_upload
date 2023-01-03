@@ -254,19 +254,25 @@ do
 	STATUS=`echo $CURLOUTPUT | jq -r '.status'`
 done
 ACTIVITY=`echo $CURLOUTPUT | jq -r '.activity_id'`
-
 # Report status
 TIME=`date +%T`
 if [ -z "$SILENT" ]; then
     echo "$TIME Upload complete: $STATUS"
 fi
-ERROR=`echo $CURLOUTPUT | jq -r '.error'`
+ERROR=`echo $CURLOUTPUT | jq -r '.message'`
 if [ "$ERROR" != "null" ]; then
+    if [ "$ERROR" = "Rate Limit Exceeded" ]; then
+    echo "Rate Limit Exceeded, will now wait 15 minutes before continuing upload"
+        sleep 900
+    fi
 	echo $ERROR
 	exit 1
 elif [ -z "$SILENT" ]; then
 	echo "You can see your activity at https://www.strava.com/activities/$ACTIVITY"
+    if [ "$ACTIVITY" != "null" ]; then
+    echo "Delete File $ORIGINALFILE"
     rm $ORIGINALFILE
+    fi
 fi
 
 exit 0
