@@ -1,6 +1,20 @@
 # strava_upload
 Strava uploader for GPX/TCX/FIT files.
-Based on https://github.com/mpolla/stravaup
+Based on kimble4/strava_upload
+
+# Changes
+- I added deletion of the processed file
+- handling rate limit exceeding, waiting 15 minutes before continuing
+
+# Usage
+I use the following terminal script to loop over files in a directory and upload them
+```
+ for i in `ls *.gpx`
+   do ./uploader.sh -n "Lauf" --description="From runtastic" -z "$i"
+ done
+ ```
+
+# Original readme
 
 GPX files originating from a Garmin eTrex 30 will have "with barometer" added to the 'creator' field so that Strava uses their elevation readings.
 
