@@ -1,4 +1,3 @@
-
 #!/bin/bash
 #
 # Command line interface for uploading to Strava.com
@@ -76,6 +75,9 @@ if [ ! -f "$FILE" ]; then
     echo "$FILE does not exist!"
     exit 1
 fi
+
+ORIGINALFILE=$FILE
+echo "uploading $ORIGINALFILE"
 
 # Make a temporary copy of the file
 TIME=`date +%T`
@@ -264,6 +266,7 @@ if [ "$ERROR" != "null" ]; then
 	exit 1
 elif [ -z "$SILENT" ]; then
 	echo "You can see your activity at https://www.strava.com/activities/$ACTIVITY"
+    rm $ORIGINALFILE
 fi
 
 exit 0
